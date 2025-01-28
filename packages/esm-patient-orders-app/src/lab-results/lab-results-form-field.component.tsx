@@ -1,20 +1,28 @@
-import React from 'react';
-import { NumberInput, Select, SelectItem, TextInput } from '@carbon/react';
+import React, { useCallback } from 'react';
+import { NumberInput, Select, SelectItem, TextInput , FormGroup , Button } from '@carbon/react';
 import { useTranslation } from 'react-i18next';
-import { type Control, Controller, type FieldErrors } from 'react-hook-form';
-import { isCoded, isNumeric, isPanel, isText, type LabOrderConcept } from './lab-results.resource';
+import { type Control, Controller, type FieldErrors, useForm, type UseFormSetValue, UseFormWatch } from 'react-hook-form';
+import { isCoded, isImage, isNumeric, isPanel, isText, type LabOrderConcept } from './lab-results.resource';
 import { type Observation } from '../types/encounter';
 import styles from './lab-results-form.scss';
+import { Add, CloseFilled } from '@carbon/react/icons';
+import { showModal, showSnackbar, type UploadedFile, useConfig } from '@openmrs/esm-framework';
+import { useAllowedFileExtensions } from '@openmrs/esm-patient-common-lib';
+import { type ConfigObject } from '../config-schema';
+
+type ResultFormType = Record<string, unknown>;
 
 interface ResultFormFieldProps {
   concept: LabOrderConcept;
-  control: Control<Record<string, unknown>>;
+  control: Control<ResultFormType>;
   defaultValue: Observation;
   errors: FieldErrors;
+  setValue: UseFormSetValue<ResultFormType>;
 }
 
-const ResultFormField: React.FC<ResultFormFieldProps> = ({ concept, control, defaultValue, errors }) => {
+const ResultFormField: React.FC<ResultFormFieldProps> = ({ concept, control, defaultValue, errors, setValue }) => {
   const { t } = useTranslation();
+  const config = useConfig<ConfigObject>();
 
   // TODO: Reference ranges should be dynamically adjusted based on patient demographics:
   // - Age-specific ranges (e.g., pediatric vs adult values)
@@ -117,6 +125,20 @@ const ResultFormField: React.FC<ResultFormFieldProps> = ({ concept, control, def
         />
       )}
 
+      {isImage(concept, config) && (
+        <Controller
+          name={concept.uuid}
+          control={control}
+          render={({ field }) => (
+            <ImageHandlerInput
+              value={field.value as UploadedFile}
+              setValue={(v: UploadedFile) => setValue(field.name, v)}
+              labelText={concept?.display || ''}
+            />
+          )}
+        />
+      )}
+
       {isPanel(concept) &&
         concept.setMembers.map((member) => (
           <React.Fragment key={member.uuid}>
@@ -186,9 +208,96 @@ const ResultFormField: React.FC<ResultFormFieldProps> = ({ concept, control, def
                 )}
               />
             )}
+            {isImage(member, config) && (
+              <Controller
+                name={member.uuid}
+                control={control}
+                render={({ field }) => (
+                  <ImageHandlerInput
+                    value={field.value as UploadedFile}
+                    setValue={(v: UploadedFile) => setValue(field.name, v)}
+                    labelText={member?.display || ''}
+                  />
+                )}
+              />
+            )}
           </React.Fragment>
         ))}
     </>
+  );
+};
+
+interface ImageHandlerInputProps {
+  value: UploadedFile;
+  setValue: (value: UploadedFile) => void;
+  labelText: string;
+}
+
+const ImageHandlerInput: React.FC<ImageHandlerInputProps> = ({ value, setValue, labelText }) => {
+  const { t } = useTranslation();
+  const allowedFileExtensions = useAllowedFileExtensions();
+
+  const showImageCaptureModal = useCallback(() => {
+    const close = showModal('capture-photo-modal', {
+      saveFile: (file: UploadedFile) => {
+        if (file) {
+          setValue(file);
+        }
+
+        close();
+        return Promise.resolve();
+      },
+      closeModal: () => {
+        close();
+      },
+      allowedExtensions:
+        allowedFileExtensions && Array.isArray(allowedFileExtensions)
+          ? allowedFileExtensions.filter((ext) => !/pdf/i.test(ext))
+          : [],
+      collectDescription: true,
+      multipleFiles: true,
+    });
+  }, [allowedFileExtensions, setValue]);
+
+  const handleRemoveImage = () => {
+    setValue(undefined);
+
+    showSnackbar({
+      title: t('imageRemoved', 'Image removed'),
+      kind: 'success',
+      isLowContrast: true,
+    });
+  };
+
+  return (
+    <FormGroup legendText="">
+      <p className={styles.imgUploadHelperText}>{labelText}</p>
+      <Button
+        className={styles.uploadButton}
+        kind="tertiary"
+        onClick={showImageCaptureModal}
+        renderIcon={(props) => <Add size={16} {...props} />}
+      >
+        {t('addImage', 'Add image')}
+      </Button>
+
+      <div className={styles.imgThumbnailGrid}>
+        {value && (
+          <div className={styles.imgThumbnailItem}>
+            <div className={styles.imgThumbnailContainer}>
+              <img
+                className={styles.imgThumbnail}
+                src={value.base64Content}
+                alt={value.fileDescription ?? value.fileName}
+              />
+            </div>
+            <Button kind="ghost" className={styles.removeButton} onClick={() => handleRemoveImage()}>
+              <CloseFilled size={16} className={styles.closeIcon} />
+            </Button>
+          </div>
+        )}
+      </div>
+    </FormGroup>
   );
 };
 

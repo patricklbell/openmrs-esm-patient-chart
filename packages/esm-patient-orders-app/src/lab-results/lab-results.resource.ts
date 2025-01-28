@@ -3,6 +3,7 @@ import { type Order } from '@openmrs/esm-patient-common-lib';
 import useSWR from 'swr';
 import { type Encounter, type Observation } from '../types/encounter';
 import { type OrderDiscontinuationPayload } from '../types/order';
+import { type ConfigObject } from '../config-schema';
 
 const labEncounterRepresentation =
   'custom:(uuid,encounterDatetime,encounterType,location:(uuid,name),' +
@@ -267,6 +268,8 @@ function getValue(concept: LabOrderConcept, values: Record<string, unknown>) {
   return null;
 }
 
+export const isImage = (concept: LabOrderConcept, config: ConfigObject) =>
+  config.imageAttachmentConceptUuids?.includes(concept.uuid);
 export const isCoded = (concept: LabOrderConcept) => concept.datatype?.display === 'Coded';
 export const isNumeric = (concept: LabOrderConcept) => concept.datatype?.display === 'Numeric';
 export const isPanel = (concept: LabOrderConcept) => concept.setMembers?.length > 0;

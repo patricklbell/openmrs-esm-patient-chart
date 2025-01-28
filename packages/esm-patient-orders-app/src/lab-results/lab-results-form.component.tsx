@@ -1,11 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, ButtonSet, Form, InlineLoading, InlineNotification, Stack } from '@carbon/react';
 import classNames from 'classnames';
-import { type Control, useForm } from 'react-hook-form';
+import { type Control, useForm, type UseFormSetValue } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { mutate } from 'swr';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { restBaseUrl, showSnackbar, useAbortController, useLayoutType } from '@openmrs/esm-framework';
+import {
+  createAttachment,
+  restBaseUrl,
+  showSnackbar,
+  type UploadedFile,
+  useAbortController,
+  useConfig,
+  useLayoutType,
+} from '@openmrs/esm-framework';
 import { type DefaultPatientWorkspaceProps, type Order } from '@openmrs/esm-patient-common-lib';
 import {
   createObservationPayload,
@@ -21,6 +29,7 @@ import {
 import { useLabResultsFormSchema } from './useLabResultsFormSchema';
 import ResultFormField from './lab-results-form-field.component';
 import styles from './lab-results-form.scss';
+import { type ConfigObject } from '../config-schema';
 
 export interface LabResultsFormProps extends DefaultPatientWorkspaceProps {
   order: Order;
@@ -39,6 +48,7 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
   const [showEmptyFormErrorNotification, setShowEmptyFormErrorNotification] = useState(false);
   const schema = useLabResultsFormSchema(order.concept.uuid);
   const { completeLabResult, isLoading, mutate: mutateResults } = useCompletedLabResults(order);
+  const config = useConfig<ConfigObject>();
 
   const mutateOrderData = useCallback(() => {
     mutate(
@@ -177,7 +187,28 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
         resultsStatusPayload,
         orderDiscontinuationPayload,
         abortController,
-      );
+      )
+        // add attachments for image fields
+        .then(() => {
+          const imageConcepts = config.imageAttachmentConceptUuids
+            ? [
+                ...(config.imageAttachmentConceptUuids?.includes(concept.uuid) ? [concept] : []),
+                ...concept.setMembers.filter((m) => config.imageAttachmentConceptUuids?.includes(m.uuid)),
+              ]
+            : [];
+
+          if (imageConcepts?.length) {
+            return Promise.all(
+              imageConcepts.map((imageConcept) => {
+                const imageToUpload = formValues[imageConcept.uuid] as UploadedFile;
+
+                return createAttachment(order.patient.uuid, imageToUpload);
+              }),
+            );
+          } else {
+            return Promise.resolve([]);
+          }
+        });
       closeWorkspaceWithSavedChanges();
       mutateResults();
       mutateOrderData();
@@ -205,6 +236,7 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
                 defaultValue={completeLabResult}
                 concept={concept}
                 control={control as unknown as Control<Record<string, unknown>>}
+                setValue={setValue as unknown as UseFormSetValue<Record<string, unknown>>}
                 errors={errors}
               />
             ) : (

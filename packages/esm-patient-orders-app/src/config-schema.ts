@@ -6,6 +6,14 @@ export const configSchema = {
     _description: 'The encounter type of the encounter encapsulating orders',
     _default: '39da3525-afe4-45ff-8977-c53b7b359158',
   },
+  imageAttachmentConceptUuids: {
+    _type: Type.Array,
+    _default: ['39da3525-afe4-45ff-8977-c53b7b359158', '649fdd34-9578-4070-96a8-36d68924d91b'],
+    _description: 'A list of all concepts which are image attachments',
+    _elements: {
+      _type: Type.ConceptUuid,
+    },
+  },
   showPrintButton: {
     _type: Type.Boolean,
     _description:
@@ -59,6 +67,7 @@ export interface OrderTypeDefinition {
 export interface ConfigObject {
   orderEncounterType: string;
   showPrintButton: boolean;
+  imageAttachmentConceptUuids: string[];
   orderTypes: Array<OrderTypeDefinition>;
   showReferenceNumberField: boolean;
 }
