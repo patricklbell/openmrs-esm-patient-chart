@@ -190,12 +190,12 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
       )
         // add attachments for image fields
         .then(() => {
-          const imageConcepts = config.imageAttachmentConceptUuids
-            ? [
-                ...(config.imageAttachmentConceptUuids?.includes(concept.uuid) ? [concept] : []),
-                ...concept.setMembers.filter((m) => config.imageAttachmentConceptUuids?.includes(m.uuid)),
-              ]
-            : [];
+          const validImageConcepts = new Set(config.imageAttachmentConceptUuids || []);
+          let imageConcepts = [
+            ...(validImageConcepts.has(concept.uuid) ? [concept] : []),
+            ...concept.setMembers.filter((m) => validImageConcepts.has(m.uuid)),
+          ];
+          imageConcepts = imageConcepts.filter((c) => formValues[c.uuid]);
 
           if (imageConcepts?.length) {
             return Promise.all(
