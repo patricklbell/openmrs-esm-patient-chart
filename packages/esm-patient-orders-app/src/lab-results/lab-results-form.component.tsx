@@ -7,6 +7,8 @@ import { mutate } from 'swr';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createAttachment,
+  type FetchResponse,
+  makeUrl,
   restBaseUrl,
   showSnackbar,
   type UploadedFile,
@@ -33,6 +35,12 @@ import { type ConfigObject } from '../config-schema';
 
 export interface LabResultsFormProps extends DefaultPatientWorkspaceProps {
   order: Order;
+}
+
+interface ImageAttachmentResult {
+  uuid: string;
+  comment: string;
+  obsDatetime: string;
 }
 
 const LabResultsForm: React.FC<LabResultsFormProps> = ({
@@ -131,6 +139,37 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
       });
     };
 
+    // Attach images to patients and replace with link
+    const validImageConcepts = new Set(config.imageAttachmentConceptUuids || []);
+    let imageConcepts = [
+      ...(validImageConcepts.has(concept.uuid) ? [concept] : []),
+      ...concept.setMembers.filter((m) => validImageConcepts.has(m.uuid)),
+    ];
+    imageConcepts = imageConcepts.filter((c) => formValues[c.uuid]);
+
+    const postAttachments = () => {
+      return Promise.all(
+        imageConcepts.map((imageConcept) => {
+          const imageToUpload = formValues[imageConcept.uuid] as UploadedFile;
+
+          return createAttachment(order.patient.uuid, imageToUpload) as Promise<FetchResponse<ImageAttachmentResult>>;
+        }),
+      );
+    };
+
+    try {
+      await postAttachments().then((res) =>
+        res.forEach((attachmentResponse, i) => {
+          const imageConcept = imageConcepts[i];
+          const link = makeUrl(`${restBaseUrl}/attachment/${attachmentResponse.data.uuid}/bytes`);
+          formValues[imageConcept.uuid] = link;
+        }),
+      );
+    } catch (err) {
+      showNotification('error', err?.message);
+      return setShowEmptyFormErrorNotification(false);
+    }
+
     // Handle update operation for completed lab order results
     if (order.fulfillerStatus === 'COMPLETED') {
       const updateTasks = Object.entries(formValues).map(([conceptUuid, value]) => {
@@ -187,28 +226,7 @@ const LabResultsForm: React.FC<LabResultsFormProps> = ({
         resultsStatusPayload,
         orderDiscontinuationPayload,
         abortController,
-      )
-        // add attachments for image fields
-        .then(() => {
-          const validImageConcepts = new Set(config.imageAttachmentConceptUuids || []);
-          let imageConcepts = [
-            ...(validImageConcepts.has(concept.uuid) ? [concept] : []),
-            ...concept.setMembers.filter((m) => validImageConcepts.has(m.uuid)),
-          ];
-          imageConcepts = imageConcepts.filter((c) => formValues[c.uuid]);
-
-          if (imageConcepts?.length) {
-            return Promise.all(
-              imageConcepts.map((imageConcept) => {
-                const imageToUpload = formValues[imageConcept.uuid] as UploadedFile;
-
-                return createAttachment(order.patient.uuid, imageToUpload);
-              }),
-            );
-          } else {
-            return Promise.resolve([]);
-          }
-        });
+      );
       closeWorkspaceWithSavedChanges();
       mutateResults();
       mutateOrderData();

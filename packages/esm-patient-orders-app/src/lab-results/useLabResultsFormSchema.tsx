@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { type LabOrderConcept, useOrderConceptByUuid } from './lab-results.resource';
+import { useConfig } from '@openmrs/esm-framework';
+import { type ConfigObject } from '../config-schema';
 
 type SchemaRecord = Record<string, z.ZodType>;
 
@@ -10,6 +12,8 @@ type SchemaRecord = Record<string, z.ZodType>;
  */
 export const useLabResultsFormSchema = (labOrderConceptUuid: string) => {
   const { concept, isLoading: isLoadingConcept } = useOrderConceptByUuid(labOrderConceptUuid);
+  const config = useConfig<ConfigObject>();
+  const imageConcepts = new Set(config.imageAttachmentConceptUuids);
 
   if (isLoadingConcept || !concept) {
     if (!concept) {
@@ -21,10 +25,10 @@ export const useLabResultsFormSchema = (labOrderConceptUuid: string) => {
   const setMembers = concept?.setMembers ?? [];
 
   if (setMembers.length > 0) {
-    return createSetMembersSchema(setMembers);
+    return createSetMembersSchema(setMembers, imageConcepts);
   }
 
-  return createSingleConceptSchema(concept);
+  return createSingleConceptSchema(concept, imageConcepts);
 };
 
 /**
@@ -32,12 +36,14 @@ export const useLabResultsFormSchema = (labOrderConceptUuid: string) => {
  * @param labOrderConcept - The lab order concept to create a schema for.
  * @returns A Zod schema object for the single concept.
  */
-const createSingleConceptSchema = (labOrderConcept: LabOrderConcept) => {
+const createSingleConceptSchema = (labOrderConcept: LabOrderConcept, anyConcepts: Set<string>) => {
   const {
     hiAbsolute: upperLimit,
     lowAbsolute: lowerLimit,
     datatype: { hl7Abbreviation },
   } = labOrderConcept;
+
+  if (anyConcepts.has(labOrderConcept.uuid)) return z.any();
 
   let zodObject: z.ZodType;
 
@@ -60,10 +66,13 @@ const createSingleConceptSchema = (labOrderConcept: LabOrderConcept) => {
  * @param labOrderConcepts - An array of lab order concepts.
  * @returns A Zod schema object for the set of concepts.
  */
-const createSetMembersSchema = (labOrderConcepts: Array<LabOrderConcept>): z.ZodObject<SchemaRecord> => {
+const createSetMembersSchema = (
+  labOrderConcepts: Array<LabOrderConcept>,
+  anyConcepts: Set<string>,
+): z.ZodObject<SchemaRecord> => {
   const schema = z.object(
     labOrderConcepts.reduce<SchemaRecord>((acc, member) => {
-      acc[member.uuid] = createSchema(member);
+      acc[member.uuid] = anyConcepts.has(member.uuid) ? z.any() : createSchema(member);
       return acc;
     }, {}),
   );
