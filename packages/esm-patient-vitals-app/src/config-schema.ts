@@ -14,6 +14,10 @@ export const configSchema = {
       _type: Type.ConceptUuid,
       _default: '5087AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
     },
+    foetalHeartRateUuid: {
+      _type: Type.ConceptUuid,
+      _default: '702a4984-7ccd-4d8d-8dfc-1eab727ea0af',
+    },
     temperatureUuid: {
       _type: Type.ConceptUuid,
       _default: '5088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -114,6 +118,7 @@ export interface ConfigObject {
     systolicBloodPressureUuid: string;
     diastolicBloodPressureUuid: string;
     pulseUuid: string;
+    foetalHeartRateUuid: string;
     temperatureUuid: string;
     oxygenSaturationUuid: string;
     heightUuid: string;

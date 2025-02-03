@@ -32,6 +32,7 @@ export interface PatientVitalsAndBiometrics {
   diastolic?: number;
   bloodPressureRenderInterpretation?: ObservationInterpretation;
   pulse?: number;
+  foetalHeartRate?: number;
   temperature?: number;
   spo2?: number;
   height?: number;

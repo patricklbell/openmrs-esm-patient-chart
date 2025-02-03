@@ -170,6 +170,8 @@ export function useVitalsAndBiometrics(patientUuid: string, mode: VitalsAndBiome
           return 'diastolic';
         case concepts.pulseUuid:
           return 'pulse';
+        case concepts.foetalHeartRateUuid:
+          return 'foetalHeartRate';
         case concepts.temperatureUuid:
           return 'temperature';
         case concepts.oxygenSaturationUuid:
@@ -193,6 +195,7 @@ export function useVitalsAndBiometrics(patientUuid: string, mode: VitalsAndBiome
       concepts.oxygenSaturationUuid,
       concepts.diastolicBloodPressureUuid,
       concepts.pulseUuid,
+      concepts.foetalHeartRateUuid,
       concepts.respiratoryRateUuid,
       concepts.temperatureUuid,
       concepts.weightUuid,

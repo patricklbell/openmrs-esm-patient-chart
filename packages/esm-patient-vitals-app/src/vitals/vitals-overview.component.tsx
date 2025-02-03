@@ -117,6 +117,14 @@ const VitalsOverview: React.FC<VitalsOverviewProps> = ({ patientUuid, pageSize, 
       sortFunc: (valueA, valueB) => (valueA.pulse && valueB.pulse ? valueA.pulse - valueB.pulse : 0),
     },
     {
+      key: 'foetalHeartRateRender',
+      header: withUnit(t('foetalHeartRate', 'FHR'), conceptUnits.get(config.concepts.foetalHeartRateUuid) ?? ''),
+      isSortable: true,
+
+      sortFunc: (valueA, valueB) =>
+        valueA.foetalHeartRate && valueB.foetalHeartRate ? valueA.foetalHeartRate - valueB.foetalHeartRate : 0,
+    },
+    {
       key: 'respiratoryRateRender',
       header: withUnit(
         t('respiratoryRateAbbreviated', 'R. Rate'),
@@ -145,6 +153,7 @@ const VitalsOverview: React.FC<VitalsOverviewProps> = ({ patientUuid, pageSize, 
           dateRender: formatDate(parseDate(vitalSigns.date.toString()), { mode: 'wide', time: true }),
           bloodPressureRender: `${vitalSigns.systolic ?? '--'} / ${vitalSigns.diastolic ?? '--'}`,
           pulseRender: vitalSigns.pulse ?? '--',
+          foetalHeartRateRender: vitalSigns.foetalHeartRate ?? '--',
           spo2Render: vitalSigns.spo2 ?? '--',
           temperatureRender: vitalSigns.temperature ?? '--',
           respiratoryRateRender: vitalSigns.respiratoryRate ?? '--',
