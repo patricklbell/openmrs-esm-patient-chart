@@ -164,6 +164,17 @@ const VitalsHeader: React.FC<VitalsHeaderProps> = ({ patientUuid, hideLinks = fa
             />
             <VitalsHeaderItem
               interpretation={assessValue(
+                latestVitals?.foetalHeartRate,
+                getReferenceRangesForConcept(config.concepts.foetalHeartRateUuid, conceptMetadata),
+              )}
+              unitName={t('foetalHeartRate', 'Foetal heart rate')}
+              unitSymbol={
+                (latestVitals?.foetalHeartRate && conceptUnits.get(config.concepts.foetalHeartRateUuid)) ?? ''
+              }
+              value={latestVitals?.foetalHeartRate ?? '--'}
+            />
+            <VitalsHeaderItem
+              interpretation={assessValue(
                 latestVitals?.respiratoryRate,
                 getReferenceRangesForConcept(config.concepts.respiratoryRateUuid, conceptMetadata),
               )}

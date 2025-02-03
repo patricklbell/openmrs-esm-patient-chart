@@ -51,6 +51,7 @@ const VitalsAndBiometricFormSchema = z
     respiratoryRate: z.number(),
     oxygenSaturation: z.number(),
     pulse: z.number(),
+    foetalHeartRate: z.number(),
     temperature: z.number(),
     generalPatientNote: z.string(),
     weight: z.number(),
@@ -117,6 +118,7 @@ const VitalsAndBiometricsForm: React.FC<DefaultPatientWorkspaceProps> = ({
   const oxygenSaturation = watch('oxygenSaturation');
   const temperature = watch('temperature');
   const pulse = watch('pulse');
+  const foetalHeartRate = watch('foetalHeartRate');
   const weight = watch('weight');
   const height = watch('height');
 
@@ -152,6 +154,7 @@ const VitalsAndBiometricsForm: React.FC<DefaultPatientWorkspaceProps> = ({
       weightRange: conceptRanges.get(config.concepts.weightUuid),
       heightRange: conceptRanges.get(config.concepts.heightUuid),
       pulseRange: conceptRanges.get(config.concepts.pulseUuid),
+      foetalHeartRateRange: conceptRanges.get(config.concepts.foetalHeartRateUuid),
     }),
     [
       conceptRanges,
@@ -160,6 +163,7 @@ const VitalsAndBiometricsForm: React.FC<DefaultPatientWorkspaceProps> = ({
       config.concepts.midUpperArmCircumferenceUuid,
       config.concepts.oxygenSaturationUuid,
       config.concepts.pulseUuid,
+      config.concepts.foetalHeartRateUuid,
       config.concepts.respiratoryRateUuid,
       config.concepts.systolicBloodPressureUuid,
       config.concepts.temperatureUuid,
@@ -392,6 +396,34 @@ const VitalsAndBiometricsForm: React.FC<DefaultPatientWorkspaceProps> = ({
                 label={t('heartRate', 'Heart rate')}
                 showErrorMessage={showErrorMessage}
                 unitSymbol={conceptUnits.get(config.concepts.pulseUuid) ?? ''}
+              />
+            </Column>
+            <Column>
+              <VitalsAndBiometricsInput
+                control={control}
+                fieldProperties={[
+                  {
+                    name: t('foetalHeartRate', 'FHR'),
+                    type: 'number',
+                    min: concepts.foetalHeartRateRange?.lowAbsolute,
+                    max: concepts.foetalHeartRateRange?.highAbsolute,
+                    id: 'foetalHeartRate',
+                  },
+                ]}
+                interpretation={
+                  foetalHeartRate &&
+                  assessValue(
+                    foetalHeartRate,
+                    getReferenceRangesForConcept(config.concepts.foetalHeartRateUuid, conceptMetadata),
+                  )
+                }
+                isValueWithinReferenceRange={
+                  foetalHeartRate &&
+                  isValueWithinReferenceRange(conceptMetadata, config.concepts['foetalHeartRateUuid'], foetalHeartRate)
+                }
+                label={t('foetalHeartRate', 'Foetal heart rate')}
+                showErrorMessage={showErrorMessage}
+                unitSymbol={conceptUnits.get(config.concepts.foetalHeartRateUuid) ?? ''}
               />
             </Column>
             <Column>

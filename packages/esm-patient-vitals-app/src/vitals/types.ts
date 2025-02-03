@@ -5,6 +5,7 @@ export interface VitalsTableRow extends PatientVitalsAndBiometrics {
   dateRender: string;
   bloodPressureRender: string;
   pulseRender: string | number;
+  foetalHeartRateRender: string | number;
   spo2Render: string | number;
   temperatureRender: string | number;
   respiratoryRateRender: string | number;
@@ -16,6 +17,7 @@ export interface VitalsTableHeader {
     | 'temperatureRender'
     | 'bloodPressureRender'
     | 'pulseRender'
+    | 'foetalHeartRateRender'
     | 'respiratoryRateRender'
     | 'spo2Render';
   header: string;

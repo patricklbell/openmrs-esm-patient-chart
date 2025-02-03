@@ -17,6 +17,7 @@ type fieldId =
   | 'midUpperArmCircumference'
   | 'oxygenSaturation'
   | 'pulse'
+  | 'foetalHeartRate'
   | 'respiratoryRate'
   | 'systolicBloodPressure'
   | 'temperature'

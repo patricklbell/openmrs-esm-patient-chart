@@ -81,6 +81,7 @@ export function generatePlaceholder(value: string) {
     case 'diastolic':
     case 'systolic':
     case 'Pulse':
+    case 'FHR':
       return '---';
 
     default:

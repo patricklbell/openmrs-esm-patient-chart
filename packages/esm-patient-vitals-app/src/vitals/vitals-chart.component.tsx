@@ -61,6 +61,11 @@ const VitalsChart: React.FC<VitalsChartProps> = ({ patientVitals, conceptUnits, 
       title: withUnit(t('pulse', 'Pulse'), conceptUnits.get(config.concepts.pulseUuid) ?? '-'),
       value: 'pulse',
     },
+    {
+      id: 'foetalHeartRate',
+      title: withUnit(t('foetalHeartRate', 'FHR'), conceptUnits.get(config.concepts.foetalHeartRateUuid) ?? '-'),
+      value: 'foetalHeartRate',
+    },
   ];
 
   const chartData = useMemo(() => {
